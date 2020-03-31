@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Fetches the free programming book title of the day from PacktPub website.
+# Author: MrFoxy
+# Date: 2018-09-06
+
+echo
+curl -s https://www.packtpub.com/packt/offers/free-learning > ~/Desktop/tmp_file
+echo "--PacktPub Deal of the Day:  " > ~/Desktop/DealOfTheDay.txt
+cat ~/Desktop/tmp_file | grep -A 6 "class=\"dotd-title\"" | cut -d'<' -f1 | sed -r 's/^\s*(.*\S)*\s*$/\1/;/^$/d' >> ~/Desktop/DealOfTheDay.txt
+rm ~/Desktop/tmp_file
+cat ~/Desktop/DealOfTheDay.txt
+echo

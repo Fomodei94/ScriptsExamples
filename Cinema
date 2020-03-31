@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Fetches current movies at Cineplex cinema.
+# Author: Fomodei94
+# Date: 2018-09-12
+
+#arg=$1 # Passing a film title as argument will provide a deeper description of it.
+arg2=$2 # Plot description selector
+
+# Paths to support files
+fullPage=~/Desktop/tmpfile
+txtOutputFile=~/Desktop/Cineplex.txt
+tmp2=~/Desktop/filmInfo # needed for additional film infos(Genre,Duration,Cast,Hours)
+tmp3=~/Desktop/filmPlot # needed to fetch plot of specific film
+comingSoon=~/Desktop/comingSoon # needed to fetch coming soon films
+
+curl -s http://www.ferrerocinemas.com/dreampark/ > $fullPage # Fetch entire page in tmpfile
+
+function list_films {
+	echo -e "\n------------- FILM AL CINEMA -------------\n" > $txtOutputFile
+	echo -e "++++++ NUOVE USCITE: ++++++\n" >> $txtOutputFile
+	cat $fullPage | grep "class=\"newMovie\"" | cut -d'>' -f4 | cut -d'<' -f1 >> $txtOutputFile
+	echo -e "\n++++++ ANCORA IN PROGRAMMAZIONE: ++++++\n" >> $txtOutputFile
+	cat $fullPage | grep "class=\"titolo\"" | grep -v NEW | cut -d'>' -f2 | cut -d'<' -f1 >> $txtOutputFile
+	cat $txtOutputFile
+	echo
+}
+
+function film_info {
+	cat $fullPage | grep -i -A17 $1 > $tmp2
+	echo
+	grep -i $1 $tmp2 | grep 'class="titolo"' | cut -d '>' -f 4 | cut -d '<' -f 1 | xargs -0 echo
+	echo
+	echo "Regia: " & cat $tmp2 | grep regia | cut -d '>' -f 4 | cut -d '<' -f 1
+	echo "Genere: " & cat $tmp2 | grep genere | cut -d '>' -f 4 | cut -d '<' -f 1
+	echo "Durata: " & cat $tmp2 | grep durata | cut -d '>' -f 4 | cut -d '<' -f 1
+	echo "Cast: " & cat $tmp2 | grep cast | cut -d '>' -f 4 | cut -d '<' -f 1
+	if [ "$2" = '-t' -o "$2" = 'trama' -o "$2" = 't' ]
+	then
+		echo
+		echo "----- TRAMA -----"
+		idFilm=`grep 'idFilm=' $tmp2 | cut -d '"' -f 4`
+		curl -s http://www.ferrerocinemas.com/generic/scheda.php?id=$idFilm > $tmp3
+		cat $tmp3 | grep 'id="trama"' | cut -d '>' -f 2 | cut -d '<' -f 1
+		rm $tmp3
+	fi
+	echo
+	echo "----- Orari: -----"
+	echo "Giovedi: " & cat $tmp2 | grep 'Gioved&igrave' | grep -o -e [0-9][0-9]:[0-9][0-9]
+	echo "Venerdi: " & cat $tmp2 | grep 'Venerd&igrave' | grep -o -e [0-9][0-9]:[0-9][0-9]
+	echo "Sabato: " & cat $tmp2 | grep 'Sabato' | grep -o -e [0-9][0-9]:[0-9][0-9]
+	echo "Domenica: " & cat $tmp2 | grep 'Domenica' | grep -o -e [0-9][0-9]:[0-9][0-9]
+	echo "Lunedi: " & cat $tmp2 | grep 'Luned&igrave' | grep -o -e [0-9][0-9]:[0-9][0-9]
+	echo "Martedi: " & cat $tmp2 | grep 'Marted&igrave' | grep -o -e [0-9][0-9]:[0-9][0-9]
+	echo "Mercoledi: " & cat $tmp2 | grep 'Mercoled&igrave' | grep -o -e [0-9][0-9]:[0-9][0-9]
+	rm $tmp2
+}
+
+function coming_soon {
+	curl -s http://www.ferrerocinemas.com/generic/prossimamente.php > $comingSoon
+	case $arg2 in
+	"")
+		echo
+		echo "------ Coming Soon:  ------"
+		echo
+		cat $comingSoon | grep -E -o '<div class="titolo">[A-Z \  \-]*</div>' | cut -d'>' -f2 | cut -d'<' -f1
+		echo;;
+	[A-Z]*) ########### ENHANCEMENT IN DEVELOPMENT ############
+		echo
+		cat $comingSoon | grep -o -E '<div class="titolo">[A-Z \ \-]* $arg2+ [A-Z \ \-]*</div>';;
+	*) echo "Invalid argument, exiting..";;
+	esac
+	rm $comingSoon
+}
+
+# Main script starts here: 
+case $1 in
+	"") list_films;;
+	[A-Z]*) film_info $1 $2;;
+	"-p") coming_soon $arg2;;
+	*) echo "Invalid argument passed, exiting.."
+esac
+rm $fullPage

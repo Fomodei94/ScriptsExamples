@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Automatically fetch links to download past-week zoo105 audio files through jdownloader.
+# Author: Fomodei94
+# Date: 2018-10-16
+# Dependencies: jownloader2, can retrieve it here: http://jdownloader.org/jdownloader2
+
+d=`date --date="last monday" +%d`
+m=`date --date="last monday" +%m`
+y=`date +%Y`
+
+function get_links {
+for dow in {lun,mar,mer,gio,ven};
+	do
+	a=`printf "%02d" $d`
+	echo "https://www.105.net/upload/uploadedContent/repliche/zoo/${dow}_${a}${m}${y}_zoo.mp3" >> ~/Desktop/Zoo105Links.txt
+	((d++))
+		if [ $d -eq $1 ];
+		then
+		d=01
+		((m++))
+		fi
+	done
+cat ~/Desktop/Zoo105Links.txt | xargs jdownloader && rm ~/Desktop/Zoo105Links.txt
+}
+
+case $m in
+01 | 03 | 05 | 07 | 08 | 10 | 12) get_links 32;;
+04 | 06 | 09 | 11) get_links 31;;
+02) get_links 29;;
+*) echo "There was an error with month in date.. exiting"
+esac
