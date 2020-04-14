@@ -1,7 +1,9 @@
 #!/bin/bash
 
+# WARNING: this script is deprecated due to changes on packtpub website. Please read repo's README for further info.
+
 # Fetches the free programming book title of the day from PacktPub website.
-# Author: MrFoxy
+# Author: Fomodei94
 # Date: 2018-09-06
 
 echo
